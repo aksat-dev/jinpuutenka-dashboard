@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>塵風天花プロジェクト ダッシュボード</title>
+<style>
+  :root {
+    --green-dark: #2d5016;
+    --green-mid: #4a7c2e;
+    --green-light: #e8f5e0;
+    --brown-dark: #5d4037;
+    --brown-mid: #8d6e63;
+    --warm-bg: #faf8f5;
+    --warm-card: #ffffff;
+    --text-main: #333333;
+    --text-sub: #666666;
+    --accent-orange: #e65100;
+    --accent-blue: #1565c0;
+    --border: #e0dcd8;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    --red-dark: #b71c1c;
+    --red-bg: #fce4ec;
+    --red-border: #e53935;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;
+    font-size: 19px; line-height: 1.8; color: var(--text-main); background: var(--warm-bg);
+  }
+
+  /* ヘッダー */
+  .header {
+    background: linear-gradient(135deg, var(--green-dark), var(--green-mid));
+    color: white; padding: 32px 24px; text-align: center;
+  }
+  .header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; letter-spacing: 2px; }
+  .header .subtitle { font-size: 16px; opacity: 0.85; }
+  .header .date { margin-top: 12px; font-size: 15px; opacity: 0.7; }
+
+  /* ナビ */
+  .nav {
+    background: white; border-bottom: 2px solid var(--border); padding: 12px 16px;
+    position: sticky; top: 0; z-index: 100; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+  }
+  .nav a {
+    display: inline-block; padding: 10px 18px; border-radius: 24px; text-decoration: none;
+    font-size: 16px; font-weight: 600; color: var(--green-dark); background: var(--green-light); transition: all 0.2s; white-space: nowrap;
+  }
+  .nav a:hover, .nav a:focus { background: var(--green-dark); color: white; }
+  .nav a.nav-critical { background: var(--red-bg); color: var(--red-dark); }
+  .nav a.nav-critical:hover { background: var(--red-dark); color: white; }
+
+  /* コンテナ */
+  .container { max-width: 800px; margin: 0 auto; padding: 24px 16px 80px; }
+
+  /* セクション */
+  .section { margin-bottom: 40px; scroll-margin-top: 80px; }
+  .section-title {
+    font-size: 24px; font-weight: 700; color: var(--green-dark);
+    padding-bottom: 12px; margin-bottom: 20px; border-bottom: 3px solid var(--green-mid);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .section-title.critical-title { color: var(--red-dark); border-bottom-color: var(--red-dark); }
+
+  /* カード */
+  .card {
+    background: var(--warm-card); border-radius: 12px; padding: 20px 24px;
+    margin-bottom: 16px; box-shadow: var(--shadow); border-left: 5px solid var(--green-mid);
+  }
+  .card.orange { border-left-color: var(--accent-orange); }
+  .card.blue { border-left-color: var(--accent-blue); }
+  .card.brown { border-left-color: var(--brown-mid); }
+  .card.red { border-left-color: var(--red-dark); }
+  .card-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+  .card-body { font-size: 18px; color: var(--text-sub); }
+  .card-body p { margin-bottom: 8px; }
+
+  .status-badge {
+    display: inline-block; padding: 4px 14px; border-radius: 16px; font-size: 14px; font-weight: 700; color: white;
+  }
+  .badge-waiting { background: var(--accent-orange); }
+  .badge-done { background: var(--green-mid); }
+  .badge-working { background: var(--accent-blue); }
+  .badge-new { background: #c62828; }
+  .badge-critical { background: var(--red-dark); }
+
+  /* 重要事項 */
+  .critical-box {
+    background: var(--red-bg); border: 3px solid var(--red-dark); border-radius: 12px;
+    padding: 24px; margin-bottom: 16px;
+  }
+  .critical-box .critical-header {
+    font-size: 20px; font-weight: 700; color: var(--red-dark); margin-bottom: 12px;
+  }
+  .critical-box .critical-body { font-size: 18px; color: #4a1010; line-height: 1.8; }
+  .critical-box .critical-body strong { color: var(--red-dark); }
+  .critical-consequence {
+    background: white; border: 2px solid var(--red-dark); border-radius: 8px;
+    padding: 14px 18px; margin-top: 16px; font-size: 18px; font-weight: 700;
+    color: var(--red-dark); text-align: center;
+  }
+
+  /* 注意カード */
+  .warning-card {
+    background: #fff3e0; border: 2px solid #ff9800; border-radius: 12px;
+    padding: 20px 24px; margin-bottom: 16px;
+  }
+  .warning-card .warning-title { font-size: 20px; font-weight: 700; color: #e65100; margin-bottom: 8px; }
+  .warning-card .warning-body { font-size: 18px; color: #5d4037; }
+
+  /* 報告書リスト */
+  .report-list { list-style: none; }
+  .report-item {
+    background: var(--warm-card); border-radius: 10px; padding: 16px 20px;
+    margin-bottom: 12px; box-shadow: var(--shadow); display: flex; align-items: flex-start; gap: 16px;
+  }
+  .report-num {
+    flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%;
+    background: var(--green-mid); color: white; display: flex;
+    align-items: center; justify-content: center; font-weight: 700; font-size: 16px;
+  }
+  .report-content { flex: 1; }
+  .report-title-text { font-weight: 700; font-size: 18px; margin-bottom: 4px; }
+  .report-title-text a { color: var(--green-dark); text-decoration: underline; }
+  .report-desc { font-size: 16px; color: var(--text-sub); }
+
+  /* クイズ */
+  .quiz-question {
+    background: var(--warm-card); border-radius: 12px; padding: 24px;
+    margin-bottom: 20px; box-shadow: var(--shadow);
+  }
+  .quiz-q-text { font-size: 20px; font-weight: 700; margin-bottom: 16px; }
+  .quiz-q-num {
+    display: inline-block; background: var(--green-dark); color: white;
+    width: 32px; height: 32px; border-radius: 50%; text-align: center;
+    line-height: 32px; font-size: 16px; margin-right: 8px;
+  }
+  .quiz-options { list-style: none; }
+  .quiz-options li { margin-bottom: 10px; }
+  .quiz-btn {
+    display: block; width: 100%; text-align: left; padding: 14px 20px;
+    border: 2px solid var(--border); border-radius: 10px; background: white;
+    font-size: 18px; cursor: pointer; transition: all 0.2s; font-family: inherit; color: var(--text-main);
+  }
+  .quiz-btn:hover { border-color: var(--green-mid); background: var(--green-light); }
+  .quiz-btn.correct { border-color: var(--green-mid); background: #c8e6c9; font-weight: 700; }
+  .quiz-btn.wrong { border-color: #c62828; background: #ffcdd2; }
+  .quiz-btn:disabled { cursor: default; opacity: 0.85; }
+  .quiz-feedback {
+    margin-top: 14px; padding: 14px 18px; border-radius: 8px;
+    font-size: 17px; display: none; line-height: 1.7;
+  }
+  .quiz-feedback.show { display: block; }
+  .quiz-feedback.correct-fb { background: #e8f5e9; border: 1px solid #a5d6a7; color: #1b5e20; }
+  .quiz-feedback.wrong-fb { background: #fce4ec; border: 1px solid #ef9a9a; color: #b71c1c; }
+  .quiz-result {
+    background: linear-gradient(135deg, var(--green-dark), var(--green-mid));
+    color: white; border-radius: 12px; padding: 28px; text-align: center;
+    display: none; margin-top: 24px;
+  }
+  .quiz-result.show { display: block; }
+  .quiz-score { font-size: 48px; font-weight: 700; margin-bottom: 8px; }
+  .quiz-score-label { font-size: 18px; opacity: 0.9; }
+  .quiz-message { margin-top: 16px; font-size: 19px; line-height: 1.6; }
+  .quiz-btn-row {
+    display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 20px;
+  }
+  .quiz-retry-btn {
+    display: inline-block; padding: 16px 32px; border: 3px solid rgba(255,255,255,0.6); border-radius: 10px;
+    font-size: 18px; font-weight: 700; cursor: pointer; font-family: inherit;
+    text-decoration: none; transition: all 0.2s;
+    background: transparent; color: white;
+  }
+  .quiz-retry-btn:hover { background: rgba(255,255,255,0.15); border-color: white; }
+  .quiz-retry-btn:active { background: rgba(255,255,255,0.3); }
+  .secret-word-box {
+    margin-top: 20px; padding: 24px; background: rgba(255,255,255,0.15);
+    border: 3px solid #ffd54f; border-radius: 12px;
+  }
+  .secret-word-label {
+    font-size: 16px; opacity: 0.9; margin-bottom: 8px;
+  }
+  .secret-word {
+    font-size: 42px; font-weight: 700; color: #ffd54f; letter-spacing: 0.1em;
+  }
+  .secret-word-guide {
+    margin-top: 12px; font-size: 16px; opacity: 0.85; line-height: 1.6;
+  }
+
+  /* フッター */
+  .footer { text-align: center; padding: 32px 16px; color: var(--text-sub); font-size: 14px; border-top: 1px solid var(--border); }
+
+  @media (max-width: 600px) {
+    body { font-size: 17px; }
+    .header h1 { font-size: 24px; }
+    .section-title { font-size: 21px; }
+    .card { padding: 16px 18px; }
+    .nav a { font-size: 14px; padding: 8px 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>塵風天花プロジェクト</h1>
+  <div class="subtitle">ダッシュボード</div>
+  <div class="date">最終更新：2026年4月5日</div>
+</div>
+
+<div class="nav">
+  <a href="#critical" class="nav-critical">重要事項</a>
+  <a href="#todo-tsunehisa">統久さんへのお願い</a>
+  <a href="#todo-akihiro">彰宏の作業</a>
+  <a href="#reports">報告書一覧</a>
+  <a href="#quiz">理解度テスト</a>
+  <a href="#caution">その他注意事項</a>
+</div>
+
+<div class="container">
+
+  <!-- ========== 重要事項 ========== -->
+  <div class="section" id="critical">
+    <div class="section-title critical-title">
+      <span style="font-size:28px;">&#9888;</span>
+      重要事項
+    </div>
+
+    <div class="critical-consequence">
+      以下の重要事項を破った場合、即座に助言を終了します。
+    </div>
+
+    <div class="critical-box" style="margin-top:16px;">
+      <div class="critical-header">物流事業の話を外部に持ち出さない</div>
+      <div class="critical-body">
+        <p>物流事業に関する話（「九州のへそ」「物流基地」「みちこタウン」等に含まれる物流事業も含む）について、<strong>元宏さんに事前の相談と了解を得ることなく、あらゆる外部の人との間で話題にしないでください。</strong></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 統久さん側 To Do ========== -->
+  <div class="section" id="todo-tsunehisa">
+    <div class="section-title">
+      <span style="font-size:28px;">&#128221;</span>
+      統久さんにお願いしたいこと
+    </div>
+
+    <div class="card red">
+      <div class="card-title">
+        <span class="status-badge badge-critical">最重要</span>
+        &nbsp;補足調査報告書「搾りかす事業の再考」を読む
+      </div>
+      <div class="card-body">
+        <p>搾りかす事業の構造について、大事な指摘が入っています。</p>
+        <p>・事業の主体は新栄クリーンサービスであるべきこと<br>
+           ・統久さんの役割は「支援する人」であること<br>
+           ・事業の規模を大幅に縮小する必要があること</p>
+        <p><strong>この報告書を読んだうえで、感想を教えてください。</strong>次の一歩はここからです。</p>
+      </div>
+    </div>
+
+    <div class="card orange">
+      <div class="card-title">
+        <span class="status-badge badge-waiting">重要</span>
+        &nbsp;緒方さんの配役を見直す
+      </div>
+      <div class="card-body">
+        <p>「搾りかす事業の再考」を読むと、緒方さんに割り振っていた役割が変わります。</p>
+        <p>まず、報告書を踏まえて<strong>緒方さんの配役をどう変えるか</strong>を考えてください。</p>
+        <p>そのうえで、新しい配役について<strong>緒方さん本人に直接「やる」かどうか</strong>を確認してください。統久さんの頭の中の構想ではなく、本人の同意が必要です。</p>
+      </div>
+    </div>
+
+    <div class="card orange">
+      <div class="card-title">
+        <span class="status-badge badge-waiting">返答待ち</span>
+        &nbsp;対話報告書 第2号を読み直す
+      </div>
+      <div class="card-body">
+        <p>4月4日に送った対話報告書 第2号の中に、今後の方針の土台が書いてあります。</p>
+        <p>特に以下の点を確認してください：</p>
+        <p>・番号8と3を選んだ意味の解釈が合っているか<br>
+           ・「選ばなかった項目」（4, 5, 7, 11, 12）の解釈に違和感はないか<br>
+           ・セクション2「関心の三つの軸」が統久さんの気持ちと合っているか</p>
+        <p>違和感があれば、そのまま教えてください。修正します。</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <span class="status-badge badge-waiting">継続</span>
+        &nbsp;AIの使い方を一つ変えてみる
+      </div>
+      <div class="card-body">
+        <p>AIに提案を作らせたら、同じAIに<strong>「この提案の問題点を5つ挙げて。致命的なものから順に」</strong>と聞いてみてください。</p>
+        <p>AIは聞き方を変えれば、自分が作った提案の弱点も正直に出します。</p>
+      </div>
+    </div>
+
+    <div class="card brown">
+      <div class="card-title">
+        <span class="status-badge badge-done">確認済み</span>
+        &nbsp;「カスは欧州へ売れない」
+      </div>
+      <div class="card-body">
+        <p>統久さん自身がこう判断しました（4月4日）。了解しました。</p>
+        <p>今後この案が復活した場合は、<strong>統久さん自身が否定した判断</strong>として扱います。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 彰宏側 To Do ========== -->
+  <div class="section" id="todo-akihiro">
+    <div class="section-title">
+      <span style="font-size:28px;">&#128736;</span>
+      彰宏が進めていること
+    </div>
+
+    <div class="card blue">
+      <div class="card-title">
+        <span class="status-badge badge-working">作業中</span>
+        &nbsp;五馬の歴史調査
+      </div>
+      <div class="card-body">
+        <p>五馬媛の伝承、万年山・伐株山の歴史的背景、五馬の近現代史を調べています。</p>
+        <p>統久さんが教えてくれた石器時代の話は面白い。日田の起源としての五馬を、もう少し掘り下げます。しばらく待ってください。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 報告書一覧 ========== -->
+  <div class="section" id="reports">
+    <div class="section-title">
+      <span style="font-size:28px;">&#128218;</span>
+      報告書一覧
+    </div>
+
+    <p style="margin-bottom:16px; font-size:17px; color: var(--text-sub);">
+      報告書名をクリックすると、Dropboxで開きます。ブラウザで閲覧またはダウンロードできます。
+    </p>
+
+    <ul class="report-list">
+      <li class="report-item" style="border: 2px solid #c62828;">
+        <div class="report-num" style="background: #c62828;">8</div>
+        <div class="report-content">
+          <div class="report-title-text"><a href="https://www.dropbox.com/scl/fi/4ngt9hzpee9v1qhjgextt/_.pdf?rlkey=r78xb2w5pn5d18mymqzaxgwd5&dl=0" target="_blank" rel="noopener">補足調査報告書：搾りかす事業の再考</a> <span class="status-badge badge-critical" style="font-size:12px;">最重要</span></div>
+          <div class="report-desc">搾りかす事業の構造を見直し、「事業主体は新栄CSであるべき」「規模は大幅縮小すべき」と提案。</div>
+        </div>
+      </li>
+      <li class="report-item">
+        <div class="report-num">7</div>
+        <div class="report-content">
+          <div class="report-title-text"><a href="https://www.dropbox.com/scl/fi/bvn66dm23fc7liirwa4c7/2.pdf?rlkey=vanoeazn06ova3vnm3dd26liz&dl=0" target="_blank" rel="noopener">対話報告書 第2号</a> <span class="status-badge badge-waiting" style="font-size:12px;">要確認</span></div>
+          <div class="report-desc">番号回答（8番と3番）の分析結果。「土地の物語」と「事業」の二つの軸を分けて考える提案。</div>
+        </div>
+      </li>
+      <li class="report-item">
+        <div class="report-num">6</div>
+        <div class="report-content">
+          <div class="report-title-text"><a href="https://www.dropbox.com/scl/fi/77uof9cecaj0mlshcxu8a/_-_260331_.pdf?rlkey=ctikxnwnjf9wszseojemu3qwf&dl=0" target="_blank" rel="noopener">補足調査報告書：九州のへそと日田周辺部の再興</a></div>
+          <div class="report-desc">日田が「九州のへそ」と呼ばれてきた歴史的根拠と、集落単位の街づくりの視点。</div>
+        </div>
+      </li>
+      <li class="report-item">
+        <div class="report-num">5b</div>
+        <div class="report-content">
+          <div class="report-title-text"><a href="https://www.dropbox.com/scl/fi/6xahgyf9j184rgwivdv94/_-_-_PPT.pdf?rlkey=6dlpcmwc9bzepxrv6euxo2wue&dl=0" target="_blank" rel="noopener">補足調査報告書：椎茸と温泉熱乾燥（PPT版）</a></div>
+          <div class="report-desc">椎茸×温泉熱乾燥の調査結果をスライド形式でまとめたもの。</div>
+        </div>
+      </li>
+      <li class="report-item">
+        <div class="report-num">5a</div>
+        <div class="report-content">
+          <div class="report-title-text"><a href="https://www.dropbox.com/scl/fi/pbn59lho5mkp7qpc5d0tt/_-_-_v2.pdf?rlkey=bc67fvtul57q2g0u29qeykqao&dl=0" target="_blank" rel="noopener">補足調査報告書：椎茸と温泉熱乾燥（v2）</a></div>
+          <div class="report-desc">天瀬の温泉熱（65℃）で椎茸を乾燥させる可能性の調査。3つの事業コンセプト案を含む。</div>
+        </div>
+      </li>
+      <li class="report-item">
+        <div class="report-num">4</div>
+        <div class="report-content">
+          <div class="report-title-text"><a href="https://www.dropbox.com/scl/fi/jpcctl7daxgvunpdu6wp0/_.pdf?rlkey=ptoxlvslheh3a2s9bs6q3au69&dl=0" target="_blank" rel="noopener">対話報告書 第1号</a></div>
+          <div class="report-desc">統久さんの考えと進捗を整理。AI分析結果・発話抽出・進捗表を含む。</div>
+        </div>
+      </li>
+      <li class="report-item">
+        <div class="report-num">3</div>
+        <div class="report-content">
+          <div class="report-title-text"><a href="https://www.dropbox.com/scl/fo/p7cytn4wtun6ldb8vzyhl/AJwgqzE1eokOlvQIiKq2Srw?rlkey=5h4yp939hshu71htdajyqu6ux&dl=0" target="_blank" rel="noopener">追加調査報告書</a></div>
+          <div class="report-desc">温泉熱の活用可能性、法的枠組み、先行事例の詳細調査（8章構成）。</div>
+        </div>
+      </li>
+      <li class="report-item">
+        <div class="report-num">2</div>
+        <div class="report-content">
+          <div class="report-title-text"><a href="https://www.dropbox.com/scl/fo/p7cytn4wtun6ldb8vzyhl/AJwgqzE1eokOlvQIiKq2Srw?rlkey=5h4yp939hshu71htdajyqu6ux&dl=0" target="_blank" rel="noopener">助言報告書</a></div>
+          <div class="report-desc">DD報告書を踏まえた事業全体へのアドバイス。</div>
+        </div>
+      </li>
+      <li class="report-item">
+        <div class="report-num">1</div>
+        <div class="report-content">
+          <div class="report-title-text"><a href="https://www.dropbox.com/scl/fi/t3j6xkj9tise6vywzmjzf/.pdf?rlkey=0258p52h13j9wobfr1ouu8fbv&dl=0" target="_blank" rel="noopener">DD報告書（デューディリジェンス報告書）</a></div>
+          <div class="report-desc">塵風天花事業の法的リスク、財務的リスク、需要の実態を洗い出した最初の報告書。</div>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- ========== 理解度テスト ========== -->
+  <div class="section" id="quiz">
+    <div class="section-title">
+      <span style="font-size:28px;">&#9997;</span>
+      報告書理解度テスト
+    </div>
+    <p style="margin-bottom:20px; color: var(--text-main); font-size:18px;">
+      これまでの報告書の要点を10問で確認します。<br>
+      全問回答後、「結果を彰宏に送る」ボタンを押してください。
+    </p>
+
+    <div class="quiz-question" id="q1">
+      <div class="quiz-q-text"><span class="quiz-q-num">1</span>天瀬の温泉（65℃）で発電はできますか？</div>
+      <ul class="quiz-options">
+        <li><button class="quiz-btn" onclick="ans(1,this,false)">できる（低温でも発電技術はある）</button></li>
+        <li><button class="quiz-btn" onclick="ans(1,this,true)">できない（発電には最低でも80℃以上が必要）</button></li>
+        <li><button class="quiz-btn" onclick="ans(1,this,false)">条件が揃えば可能性はある</button></li>
+      </ul>
+      <div class="quiz-feedback" id="fb1"></div>
+    </div>
+
+    <div class="quiz-question" id="q2">
+      <div class="quiz-q-text"><span class="quiz-q-num">2</span>搾りかす事業の本来の主体は誰であるべきですか？</div>
+      <ul class="quiz-options">
+        <li><button class="quiz-btn" onclick="ans(2,this,false)">統久さん（発起人として）</button></li>
+        <li><button class="quiz-btn" onclick="ans(2,this,true)">新栄クリーンサービス（廃棄物処理の当事者）</button></li>
+        <li><button class="quiz-btn" onclick="ans(2,this,false)">緒方さん（事業経験者として）</button></li>
+        <li><button class="quiz-btn" onclick="ans(2,this,false)">日田市（行政として）</button></li>
+      </ul>
+      <div class="quiz-feedback" id="fb2"></div>
+    </div>
+
+    <div class="quiz-question" id="q3">
+      <div class="quiz-q-text"><span class="quiz-q-num">3</span>「天瀬の柚子300〜500トン」という数字は正しいですか？</div>
+      <ul class="quiz-options">
+        <li><button class="quiz-btn" onclick="ans(3,this,false)">正しい</button></li>
+        <li><button class="quiz-btn" onclick="ans(3,this,true)">正しくない（日田圏域全体でも100〜300トン程度）</button></li>
+        <li><button class="quiz-btn" onclick="ans(3,this,false)">もっと多い</button></li>
+      </ul>
+      <div class="quiz-feedback" id="fb3"></div>
+    </div>
+
+    <div class="quiz-question" id="q4">
+      <div class="quiz-q-text"><span class="quiz-q-num">4</span>AIが作った事業計画の数字（年商1億8千万円）は信頼できますか？</div>
+      <ul class="quiz-options">
+        <li><button class="quiz-btn" onclick="ans(4,this,false)">信頼できる（AIが計算した）</button></li>
+        <li><button class="quiz-btn" onclick="ans(4,this,true)">信頼できない（算出の根拠が見つかっていない）</button></li>
+        <li><button class="quiz-btn" onclick="ans(4,this,false)">おおよそ合っている</button></li>
+      </ul>
+      <div class="quiz-feedback" id="fb4"></div>
+    </div>
+
+    <div class="quiz-question" id="q5">
+      <div class="quiz-q-text"><span class="quiz-q-num">5</span>瀬戸会頭への対応で、まず考えるべきことは何ですか？</div>
+      <ul class="quiz-options">
+        <li><button class="quiz-btn" onclick="ans(5,this,false)">できるだけたくさん資料を送る</button></li>
+        <li><button class="quiz-btn" onclick="ans(5,this,true)">そもそも瀬戸会頭に何を頼む必要があるのかを整理する</button></li>
+        <li><button class="quiz-btn" onclick="ans(5,this,false)">すぐに次の面談を申し込む</button></li>
+      </ul>
+      <div class="quiz-feedback" id="fb5"></div>
+    </div>
+
+    <div class="quiz-question" id="q6">
+      <div class="quiz-q-text"><span class="quiz-q-num">6</span>統久さんの一番の強みは何ですか？</div>
+      <ul class="quiz-options">
+        <li><button class="quiz-btn" onclick="ans(6,this,false)">自分で製品を作ること</button></li>
+        <li><button class="quiz-btn" onclick="ans(6,this,true)">人と人を結びつけること（支援者としての力）</button></li>
+        <li><button class="quiz-btn" onclick="ans(6,this,false)">事業計画を書くこと</button></li>
+      </ul>
+      <div class="quiz-feedback" id="fb6"></div>
+    </div>
+
+    <div class="quiz-question" id="q7">
+      <div class="quiz-q-text"><span class="quiz-q-num">7</span>「天瀬の再生」という言葉の問題点は何ですか？</div>
+      <ul class="quiz-options">
+        <li><button class="quiz-btn" onclick="ans(7,this,false)">特に問題はない</button></li>
+        <li><button class="quiz-btn" onclick="ans(7,this,false)">天瀬はすでに再生しているから不要</button></li>
+        <li><button class="quiz-btn" onclick="ans(7,this,true)">「天瀬」は行政の名前であり、五馬や馬原など集落ごとに事情が異なる</button></li>
+      </ul>
+      <div class="quiz-feedback" id="fb7"></div>
+    </div>
+
+    <div class="quiz-question" id="q8">
+      <div class="quiz-q-text"><span class="quiz-q-num">8</span>DD報告書で指摘された法的リスク（有価物と産廃の矛盾）は解決しましたか？</div>
+      <ul class="quiz-options">
+        <li><button class="quiz-btn" onclick="ans(8,this,false)">AIが解決策を出したので解決済み</button></li>
+        <li><button class="quiz-btn" onclick="ans(8,this,false)">緒方さんが解決してくれる</button></li>
+        <li><button class="quiz-btn" onclick="ans(8,this,true)">まだ解決していない（専門家の確認が必要）</button></li>
+      </ul>
+      <div class="quiz-feedback" id="fb8"></div>
+    </div>
+
+    <div class="quiz-question" id="q9">
+      <div class="quiz-q-text"><span class="quiz-q-num">9</span>事業計画を進める前に、まず必要なことは何ですか？</div>
+      <ul class="quiz-options">
+        <li><button class="quiz-btn" onclick="ans(9,this,false)">AIに詳細な事業計画を作らせる</button></li>
+        <li><button class="quiz-btn" onclick="ans(9,this,false)">銀行に融資の相談をする</button></li>
+        <li><button class="quiz-btn" onclick="ans(9,this,true)">関係者（緒方さん等）本人の意思を直接確認する</button></li>
+      </ul>
+      <div class="quiz-feedback" id="fb9"></div>
+    </div>
+
+    <div class="quiz-question" id="q10">
+      <div class="quiz-q-text"><span class="quiz-q-num">10</span>AIに提案を作らせた後、次にすべきことは何ですか？</div>
+      <ul class="quiz-options">
+        <li><button class="quiz-btn" onclick="ans(10,this,false)">そのまま瀬戸会頭に送る</button></li>
+        <li><button class="quiz-btn" onclick="ans(10,this,true)">同じAIに「この提案の問題点を5つ挙げて」と聞く</button></li>
+        <li><button class="quiz-btn" onclick="ans(10,this,false)">別のAIにも同じ質問をする</button></li>
+      </ul>
+      <div class="quiz-feedback" id="fb10"></div>
+    </div>
+
+    <div class="quiz-result" id="quizResult">
+      <div class="quiz-score" id="scoreText"></div>
+      <div class="quiz-score-label">10問中の正解数</div>
+      <div class="quiz-message" id="resultMsg"></div>
+      <div id="secretWordArea"></div>
+      <div class="quiz-btn-row" style="margin-top:20px;">
+        <button class="quiz-retry-btn" onclick="retryQuiz()">もう一度やり直す</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== その他注意事項 ========== -->
+  <div class="section" id="caution">
+    <div class="section-title">
+      <span style="font-size:28px;">&#128161;</span>
+      その他注意事項
+    </div>
+
+    <div class="warning-card">
+      <div class="warning-title">法的リスクは未解決です</div>
+      <div class="warning-body">
+        <p>DD報告書で指摘した「有価物と産業廃棄物の法的矛盾」は、まだ解決していません。</p>
+        <p>AIが提案した「食品リサイクル法 第5条の回避策」は、専門家の確認を取っていない段階です。事業を進める前に、弁護士または行政書士への相談が必要です。</p>
+      </div>
+    </div>
+
+    <div class="warning-card">
+      <div class="warning-title">AIが作った数字をそのまま使わない</div>
+      <div class="warning-body">
+        <p>年商1億8千万円、営業利益6千万円という数字は、AIが算出根拠なく出したものです。</p>
+        <p>瀬戸会頭のような実業家は、数字の根拠を必ず確認します。根拠のない数字を出すと信頼を損ないます。</p>
+      </div>
+    </div>
+
+    <div class="warning-card">
+      <div class="warning-title">人に役割を割り振る前に本人の確認を</div>
+      <div class="warning-body">
+        <p>構想の中で人に役割を割り振っても、<strong>本人が同意しているかの確認</strong>が必要です。</p>
+        <p>「そんなつもりじゃなかった」と後から言われると、大切な人間関係が壊れます。</p>
+      </div>
+    </div>
+
+    <div class="warning-card">
+      <div class="warning-title">報告書とAIの回答は違うものです</div>
+      <div class="warning-body">
+        <p>彰宏が時間をかけて分析した報告書と、AIが即座に生成する回答は、同じものではありません。</p>
+        <p>AIの回答についてのアドバイスはできません。報告書を読んで、わからないことがあればそれを教えてください。</p>
+      </div>
+    </div>
+
+    <div class="warning-card">
+      <div class="warning-title">事業の規模を現実に合わせる</div>
+      <div class="warning-body">
+        <p>天瀬の温泉は65℃。発電はできません。使えるのは乾燥や暖房などの熱利用です。</p>
+        <p>大きな夢は大切ですが、まず足元の小さな一歩から始めましょう。</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <p>プロジェクトの活動整理（2026年4月5日時点）</p>
+</div>
+
+<script>
+var FB = {
+  1: { c: "正解です。天瀬の温泉は65℃で、発電（バイナリー発電）には最低でも80℃以上が必要です。65℃でできるのは、乾燥・暖房・給湯などの熱利用です。",
+       w: "残念。天瀬の温泉は65℃で、発電には温度が足りません。バイナリー発電でも最低80℃以上が必要です。追加調査報告書で詳しく説明しています。" },
+  2: { c: "正解です。搾りかすの処理に困っているのは新栄クリーンサービスです。困っている当事者が事業の主体になるべきで、統久さんの役割は「支援する人」です。",
+       w: "搾りかすの処理に困っているのは新栄クリーンサービスです。統久さんの強みは「人と人を結びつけること」であり、自分が事業主体になることではありません。" },
+  3: { c: "正解です。「天瀬の柚子300〜500トン」は不成立です。日田圏域全体でも100〜300トン程度が現実的な数字です。",
+       w: "「天瀬の柚子300〜500トン」は正しくありません。日田圏域全体でも100〜300トン程度が現実的です。DD報告書で指摘しています。" },
+  4: { c: "正解です。この数字はAIが算出根拠なく生成したものです。瀬戸会頭のような実業家に見せる場合、根拠のない数字は信頼を損ないます。",
+       w: "この数字は信頼できません。AIが統久さんの話を全肯定して出したもので、算出の根拠がありません。" },
+  5: { c: "正解です。資料を送ったり面談を重ねたりする前に、まず「瀬戸会頭に何を頼む必要があるのか」を整理する必要があります。目的が明確でない接触は、相手の信頼を消耗させます。",
+       w: "まず「瀬戸会頭に何を頼む必要があるのか」を整理することが先です。目的が明確でない接触は、かえって信頼を消耗させます。" },
+  6: { c: "正解です。統久さん自身が「結びつけることしかできない存在」と言っています。銀行員として培った人脈力と調整力は、支援者として最も活きる強みです。",
+       w: "統久さんの一番の強みは「人と人を結びつけること」です。統久さん自身もそう言っています。製品を作るのは別の人の仕事です。" },
+  7: { c: "正解です。旧天瀬町は17の自治会から成り、五馬・中川・馬原の住民にとって「天瀬」は行政上の名前にすぎません。街づくりは集落単位で考える必要があります。",
+       w: "「天瀬」は行政上の名前であり、五馬や馬原など集落ごとに暮らしの実感が異なります。報告書では集落単位で考えることを提案しています。" },
+  8: { c: "正解です。AIが出した回避策は専門家の確認を取っていません。弁護士や行政書士への相談なしに「解決済み」とすることはできません。",
+       w: "まだ解決していません。AIの回避策は専門家の確認を取っておらず、事業を進める前に弁護士等への相談が必要です。" },
+  9: { c: "正解です。事業計画の前に、関係者本人が「やる」と言っているかの確認が必要です。本人の同意がないまま計画を進めると、後で壊れます。",
+       w: "まず関係者本人の意思確認が必要です。AIに事業計画を作らせても、実行する人が同意していなければ意味がありません。" },
+  10:{ c: "正解です。AIは聞き方を変えれば、自分が作った提案の弱点も正直に出します。このステップを入れるだけで提案の質が上がります。",
+       w: "AIに提案を作らせたら、同じAIに「この提案の問題点を5つ挙げて」と聞いてみてください。そのまま送るのは危険です。" }
+};
+
+var score = 0, answered = 0, total = 10, details = [];
+
+function ans(n, btn, ok) {
+  var q = document.getElementById('q'+n);
+  if (q.dataset.done) return;
+  q.dataset.done = '1';
+  var btns = q.querySelectorAll('.quiz-btn');
+  btns.forEach(function(b) {
+    b.disabled = true;
+    var isC = b.getAttribute('onclick').indexOf(',true)') > -1;
+    if (b === btn) b.classList.add(ok ? 'correct' : 'wrong');
+    else if (isC && !ok) b.classList.add('correct');
+  });
+  var fb = document.getElementById('fb'+n);
+  fb.textContent = ok ? FB[n].c : FB[n].w;
+  fb.className = 'quiz-feedback show ' + (ok ? 'correct-fb' : 'wrong-fb');
+  if (ok) score++;
+  details.push('Q'+n+': '+(ok?'○':'×'));
+  answered++;
+  if (answered === total) showResult();
+}
+
+function showResult() {
+  var r = document.getElementById('quizResult');
+  r.classList.add('show');
+  document.getElementById('scoreText').textContent = score + ' / ' + total;
+  var msg = '';
+  var secretArea = document.getElementById('secretWordArea');
+  if (score === total) {
+    msg = '素晴らしい！ 報告書の内容をしっかり理解してくれています。';
+    secretArea.innerHTML =
+      '<div class="secret-word-box">' +
+      '<div class="secret-word-label">&#127881; 全問正解おめでとうございます！秘密の合言葉：</div>' +
+      '<div class="secret-word">コアラ</div>' +
+      '<div class="secret-word-guide">この動物の名前を彰宏にLINEで送ってください。<br>理解度の確認が完了します。</div>' +
+      '</div>';
+  } else if (score >= 7) {
+    msg = '良い結果です。いくつかの点は報告書を読み返すと理解が深まります。全問正解すると秘密の合言葉が表示されます。';
+    secretArea.innerHTML = '';
+  } else if (score >= 5) {
+    msg = '半分以上正解ですが、大事なポイントを見直してください。全問正解すると秘密の合言葉が表示されます。';
+    secretArea.innerHTML = '';
+  } else {
+    msg = '報告書を改めて読み直してみてください。わからないところは遠慮なく聞いてください。';
+    secretArea.innerHTML = '';
+  }
+  document.getElementById('resultMsg').textContent = msg;
+  setTimeout(function() { r.scrollIntoView({behavior:'smooth',block:'center'}); }, 300);
+}
+
+function retryQuiz() {
+  // 全問リセット
+  score = 0; answered = 0; details = [];
+  for (var i = 1; i <= total; i++) {
+    var q = document.getElementById('q'+i);
+    delete q.dataset.done;
+    var btns = q.querySelectorAll('.quiz-btn');
+    btns.forEach(function(b) {
+      b.disabled = false;
+      b.classList.remove('correct','wrong');
+    });
+    var fb = document.getElementById('fb'+i);
+    fb.className = 'quiz-feedback';
+    fb.textContent = '';
+  }
+  // 結果パネルを隠す
+  var r = document.getElementById('quizResult');
+  r.classList.remove('show');
+  // 秘密の合言葉エリアをクリア
+  document.getElementById('secretWordArea').innerHTML = '';
+  // テストの先頭にスクロール
+  document.getElementById('quiz').scrollIntoView({behavior:'smooth',block:'start'});
+}
+</script>
+</body>
+</html>
